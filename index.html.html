@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ulaanbaatar Road Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF2F8; --surface:#FFFFFF; --ink:#13213F; --muted:#5A647D; --soft:#8A93A8;
+  --sky:#1F4FA0; --sky-tint:#DCE6F6; --gold:#E2A324; --gold-ink:#2A1C00; --line:#D5DCE8; --grass:#3F7A34;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0B1630; --surface:#13234A; --ink:#EEF2FA; --muted:#A8B3CC; --soft:#7684A3;
+    --sky:#7EA6EE; --sky-tint:#1C3266; --gold:#F0B53A; --gold-ink:#231700; --line:#26386173; --grass:#86C277;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B1630; --surface:#13234A; --ink:#EEF2FA; --muted:#A8B3CC; --soft:#7684A3;
+  --sky:#7EA6EE; --sky-tint:#1C3266; --gold:#F0B53A; --gold-ink:#231700; --line:#26386173; --grass:#86C277;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Onest",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:17px;line-height:1.5;-webkit-tap-highlight-color:transparent}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.wrap{max-width:760px;margin:0 auto;padding:16px 16px 40px}
+
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.brand{font-family:"Unbounded","Onest",system-ui,sans-serif;font-weight:700;font-size:1.15rem;letter-spacing:-.01em;margin:0;flex:1;min-width:200px;line-height:1.2}
+.brand small{display:block;font-family:"Onest",system-ui,sans-serif;font-weight:500;font-size:.85rem;color:var(--muted);letter-spacing:0;margin-top:2px}
+.selects{display:flex;gap:8px}
+select{background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:9px 10px;font-weight:600;min-height:44px}
+
+/* Route ribbon */
+.route{position:relative;overflow-x:auto;padding:6px 2px 10px;margin:0 -16px;scrollbar-width:none}
+.route::-webkit-scrollbar{display:none}
+.route ol{list-style:none;margin:0;padding:0 16px;display:flex;gap:0;min-width:max-content}
+.route li{position:relative;width:96px;flex:none}
+.route li::before{content:"";position:absolute;top:19px;left:0;right:0;height:4px;background:var(--line)}
+.route li:first-child::before{left:50%}
+.route li:last-child::before{right:50%}
+.route li.done::before{background:var(--sky)}
+.route button{position:relative;background:none;border:0;padding:0;display:flex;flex-direction:column;align-items:center;width:100%;gap:6px}
+.dot{width:42px;height:42px;border-radius:50%;background:var(--surface);border:3px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:.95rem;color:var(--muted);transition:transform .2s}
+.route li.done .dot{border-color:var(--sky);color:var(--sky)}
+.route li.current .dot{background:var(--sky);border-color:var(--sky);color:#fff;transform:scale(1.12)}
+.route .lbl{font-size:.78rem;line-height:1.2;color:var(--muted);text-align:center;padding:0 4px}
+.route li.current .lbl{color:var(--ink);font-weight:600}
+
+/* Stage */
+.stage{background:var(--surface);border-radius:22px;padding:20px 20px 22px;margin-top:6px;border:1.5px solid var(--line)}
+.where{font-size:.9rem;color:var(--muted);font-weight:500;margin:0 0 4px}
+.stage h2{font-family:"Unbounded","Onest",system-ui,sans-serif;font-weight:700;font-size:clamp(1.35rem,4.6vw,1.9rem);line-height:1.15;letter-spacing:-.015em;margin:0 0 14px}
+.caption{font-size:clamp(1.08rem,3.4vw,1.28rem);line-height:1.6;color:var(--soft);max-height:15.5em;overflow-y:auto;margin:0;scroll-behavior:smooth}
+.caption span{transition:color .25s}
+.caption span.read{color:var(--muted)}
+.caption span.now{color:var(--ink)}
+.caption.idle span{color:var(--ink)}
+.note{font-size:.88rem;color:var(--muted);margin:12px 0 0;min-height:1.3em}
+
+/* Controls */
+.controls{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;margin:22px 0 8px}
+.step{min-height:64px;border-radius:16px;border:1.5px solid var(--line);background:var(--surface);font-weight:600;font-size:1rem;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 12px}
+.step:disabled{opacity:.4;cursor:default}
+.step svg{width:22px;height:22px;flex:none}
+.play{position:relative;width:136px;height:136px;border-radius:50%;border:0;background:var(--gold);color:var(--gold-ink);display:grid;place-items:center;box-shadow:0 10px 28px -10px rgba(226,163,36,.75)}
+.play svg{width:52px;height:52px}
+.play .ring{position:absolute;inset:-10px;border-radius:50%;border:3px solid var(--gold);opacity:0}
+.speaking .play .ring{animation:pulse 1.8s ease-out infinite}
+@keyframes pulse{0%{transform:scale(.92);opacity:.8}100%{transform:scale(1.18);opacity:0}}
+@media (prefers-reduced-motion:reduce){.speaking .play .ring{animation:none;opacity:.6}.dot{transition:none}}
+.playlabel{text-align:center;font-weight:600;color:var(--muted);margin:0 0 18px;font-size:.95rem}
+
+.autorow{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--sky-tint);border-radius:16px;padding:12px 14px;flex-wrap:wrap}
+.toggle{display:flex;align-items:center;gap:12px;background:none;border:0;padding:4px 0;font-weight:600;text-align:left}
+.switch{width:52px;height:30px;border-radius:30px;background:var(--line);position:relative;flex:none;transition:background .2s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+[aria-pressed="true"] .switch{background:var(--sky)}
+[aria-pressed="true"] .switch::after{transform:translateX(22px)}
+.toggle small{display:block;font-weight:400;color:var(--muted);font-size:.85rem}
+.countdown{font-weight:700;color:var(--sky)}
+
+h3{font-family:"Unbounded","Onest",system-ui,sans-serif;font-size:1rem;font-weight:500;margin:30px 0 12px;letter-spacing:-.005em}
+.topics{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.topic{min-height:64px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);text-align:left;padding:12px 14px;font-weight:600;display:flex;align-items:center;gap:10px;line-height:1.25}
+.topic .em{font-size:1.4rem;flex:none}
+.topic[aria-current="true"]{border-color:var(--sky);background:var(--sky-tint)}
+
+.ask{background:var(--surface);border:1.5px solid var(--line);border-radius:18px;padding:14px}
+.askrow{display:flex;gap:8px}
+.askrow input{flex:1;min-width:0;min-height:52px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);padding:0 14px}
+.btn{min-height:52px;border-radius:12px;border:0;background:var(--sky);color:#fff;font-weight:600;padding:0 18px;display:inline-flex;align-items:center;gap:8px;justify-content:center}
+:root[data-theme="dark"] .btn{color:#0B1630}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn{color:#0B1630}}
+.btn.ghost{background:transparent;color:var(--sky);border:1.5px solid var(--sky)}
+.btn:disabled{opacity:.5;cursor:default}
+.mic{width:52px;padding:0}
+.mic.on{background:var(--gold);color:var(--gold-ink)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{border:1.5px solid var(--line);background:transparent;border-radius:999px;padding:7px 12px;font-size:.88rem;min-height:38px}
+.more{margin-top:12px;width:100%}
+.ai-off{font-size:.9rem;color:var(--muted);margin:0}
+.speedrow{display:flex;align-items:center;gap:10px;margin-top:26px;color:var(--muted);font-size:.9rem;flex-wrap:wrap}
+.speedrow input{accent-color:var(--sky);flex:1;min-width:140px}
+footer{margin-top:22px;font-size:.82rem;color:var(--soft)}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <header>
+    <h1 class="brand">Ulaanbaatar Road Guide<small>Airport to city, narrated</small></h1>
+    <div class="selects">
+      <label class="sr" style="position:absolute;left:-9999px" for="lang">Language</label>
+      <select id="lang" aria-label="Narration language"></select>
+    </div>
+  </header>
+
+  <nav class="route" aria-label="Stops on the route"><ol id="route"></ol></nav>
+
+  <section class="stage" aria-live="polite">
+    <p class="where" id="where"></p>
+    <h2 id="title"></h2>
+    <p class="caption idle" id="caption"></p>
+    <p class="note" id="note"></p>
+  </section>
+
+  <div class="controls">
+    <button class="step" id="prev" aria-label="Previous stop">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>Back
+    </button>
+    <button class="play" id="play" aria-label="Play narration">
+      <span class="ring"></span>
+      <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
+    </button>
+    <button class="step" id="next" aria-label="Next stop">
+      Next<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </div>
+  <p class="playlabel" id="playlabel">Press play to start the guide</p>
+
+  <div class="autorow">
+    <button class="toggle" id="auto" aria-pressed="false">
+      <span class="switch"></span>
+      <span>Auto tour<small>Plays every stop in order, with a pause between them</small></span>
+    </button>
+    <label style="display:flex;align-items:center;gap:8px;font-size:.9rem;color:var(--muted)">Pause
+      <select id="gap" aria-label="Pause between stops">
+        <option value="20">20 s</option>
+        <option value="45" selected>45 s</option>
+        <option value="90">1.5 min</option>
+        <option value="180">3 min</option>
+      </select>
+    </label>
+    <span class="countdown" id="countdown" hidden></span>
+  </div>
+
+  <h3>Hear about</h3>
+  <div class="topics" id="topics"></div>
+
+  <h3>Ask the guide</h3>
+  <div class="ask" id="ask">
+    <div class="askrow">
+      <input id="q" type="text" placeholder="What’s that building? Where can I buy cashmere?" autocomplete="off" enterkeyhint="send">
+      <button class="btn mic" id="mic" aria-label="Ask by voice" hidden>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+      </button>
+      <button class="btn" id="askBtn">Ask</button>
+    </div>
+    <div class="chips" id="chips"></div>
+    <button class="btn ghost more" id="more">Tell me more about this place</button>
+    <p class="ai-off" id="aiOff" hidden>The AI guide is not available in this view. All route stories still play in English.</p>
+  </div>
+
+  <div class="speedrow">
+    <label for="rate">Voice speed</label>
+    <input id="rate" type="range" min="0.7" max="1.3" step="0.05" value="0.95">
+    <span id="rateVal">0.95×</span>
+  </div>
+  <footer>Stories are written for the drive from Chinggis Khaan International Airport into central Ulaanbaatar. Drivers: press play only when it’s safe, and let passengers use the screen.</footer>
+</div>
+
+<script>
+const STOPS = [
+ {id:"airport", short:"Airport", title:"Chinggis Khaan International Airport", text:"Sain baina uu, and welcome to Mongolia! You’ve just landed at Chinggis Khaan International Airport, which opened in July 2021 in the Khushig Valley, about fifty kilometres south of Ulaanbaatar. It replaced the old Buyant-Ukhaa airport, which sat closer to the city but was hemmed in by mountains, making it difficult for large aircraft. The new terminal was built with support from Japan, and it is named after the founder of the Mongol Empire, a name you’ll see everywhere here. The drive into the city takes around forty-five minutes to an hour, depending on traffic. Sit back, watch the open steppe, and I’ll tell you about the places we pass and the story of the capital along the way."},
+ {id:"steppe", short:"The steppe", title:"The open steppe", text:"Look out the windows: this is the Mongolian steppe, rolling grassland that covers much of the country. Mongolia is one of the least densely populated countries on Earth, with roughly three and a half million people in a land bigger than France, Germany and Italy put together. Many families still live a herding life, moving with the seasons to find fresh pasture. You may spot white felt tents called gers, along with horses, sheep, goats, cattle and sometimes camels. Mongolians call these animals the five snouts, and here livestock outnumber people by nearly twenty to one."},
+ {id:"expressway", short:"Expressway", title:"The road to the capital", text:"We’re travelling on the expressway built to link the new airport with the capital. As we head north, the land slowly rises toward the mountains that ring Ulaanbaatar. The city sits in a valley about 1,350 metres above sea level, surrounded by four sacred mountains: Bogd Khan to the south, Chingeltei to the north, Songino Khairkhan to the west and Bayanzürkh to the east. This bowl shape gives the city its dramatic setting, but in winter it also traps cold air. Ulaanbaatar is often called the coldest capital city in the world, with January nights regularly dropping below minus thirty degrees Celsius."},
+ {id:"bogdkhan", short:"Bogd Khan Mountain", title:"Bogd Khan Mountain", text:"The forested range you can see is Bogd Khan Uul, the holy mountain that guards the city’s southern side. Mongolians have revered it for centuries, and it was placed under protection in the late 1700s, which makes it one of the oldest protected natural areas in the world. Today it is a strictly protected area and a UNESCO biosphere reserve. Notice how the northern slopes are covered in larch and pine while others are bare grass. That pattern is typical of Mongolia, where forests grow on the shadier, moister north-facing sides. Hidden on the mountain’s southern slopes is Manzushir Monastery, a peaceful ruin that makes a lovely day trip."},
+ {id:"tuul", short:"Tuul River", title:"Crossing the Tuul River", text:"Now we cross the Tuul River, which flows along the southern edge of Ulaanbaatar. Mongolians consider it sacred, and it appears in the Secret History of the Mongols, the oldest surviving work of Mongolian literature, written in the thirteenth century. The Tuul runs for about seven hundred kilometres before joining the Orkhon River, and its water eventually reaches Lake Baikal in Russia. In summer, families picnic among the willows along its banks."},
+ {id:"zaisan", short:"Zaisan", title:"Zaisan Memorial", text:"On the hill beside the river stands the Zaisan Memorial. Built in 1971 during the socialist era, it honours Soviet and Mongolian soldiers who fought in the Second World War. Its circular mosaic shows scenes of friendship between the two countries, from the 1921 revolution all the way to space flight. Climbing the roughly three hundred steps rewards you with one of the best views of the whole city. At the foot of the hill is Buddha Park, with a large golden standing Buddha, surrounded by some of Ulaanbaatar’s newest apartment towers."},
+ {id:"palace", short:"Bogd Khan Palace", title:"Bogd Khan Palace Museum", text:"As we head into the centre, we pass close to the Bogd Khan Palace Museum, the winter palace of Mongolia’s last monarch, the Eighth Bogd Khan. He was the country’s highest Buddhist leader and, after independence in 1911, its ruler as well. The palace was built between 1893 and 1903 and is the only one of his residences to survive. Its gates and temples hold thrones, robes and a famous ger covered with the skins of 150 snow leopards. It’s a quiet, fascinating place to understand the city before the Soviet era."},
+ {id:"city", short:"Into the city", title:"Welcome to Ulaanbaatar", text:"Welcome to Ulaanbaatar! Around one point seven million people live here, close to half of Mongolia’s entire population. The city has grown very fast since the 1990s, as herding families moved in from the countryside. Look up at the hills and you may see the ger districts, neighbourhoods of felt tents and small wooden houses where many newcomers settled. Down here you’ll see Soviet-style apartment blocks, modern glass towers, Buddhist temples and plenty of traffic. That mix of old and new, nomadic and urban, is what makes Ulaanbaatar unlike anywhere else."},
+ {id:"square", short:"Sükhbaatar Square", title:"Sükhbaatar Square", text:"In the heart of the city is Sükhbaatar Square, Mongolia’s main gathering place. In the middle stands Damdin Sükhbaatar on horseback, a hero of the 1921 revolution that drove out foreign forces and secured the country’s independence. On the north side is the Government Palace, with a huge seated statue of Chinggis Khaan, built in 2006 to mark eight hundred years since the founding of the Great Mongol State. In 1990 this square filled with peaceful protesters and hunger strikers, and their demands led Mongolia to become a democracy without bloodshed. Every July, the nine white banners of the Mongol nation are carried from here to open the Naadam festival."},
+ {id:"gandan", short:"Gandan Monastery", title:"Gandan Monastery", text:"West of the centre stands Gandan Monastery, the largest and most important Buddhist monastery in Mongolia, founded in the 1830s. In the 1930s, communist purges destroyed hundreds of monasteries across the country and killed many thousands of monks. Gandan was closed, then reopened in 1944 as a showpiece, and for decades it was the only working monastery allowed. Inside its tall white temple stands Migjid Janraisig, the bodhisattva of compassion, about twenty-six metres high and covered in gold. The original statue was taken away in 1937; this one was raised in 1996 with donations from Mongolians. Visit in the morning to hear the monks chanting."}
+];
+
+const TOPICS = [
+ {id:"history", em:"🏯", title:"History of Ulaanbaatar", text:"Ulaanbaatar began life on the move. In 1639 it was founded as a mobile monastery, a city of gers called Örgöö, for Zanabazar, Mongolia’s first great Buddhist leader and a gifted sculptor. For more than a century the monastery-city moved over twenty times along the rivers of central Mongolia, before settling at its present site by the Tuul River in 1778. Foreign travellers knew it as Urga, while Mongolians called it Ikh Khüree, the Great Camp. It grew into a centre of religion and trade on the caravan routes between China and Russia. In 1911, as the Qing dynasty collapsed, Mongolia declared independence and the city, renamed Niislel Khüree, became its capital. After the revolution of 1921 and the founding of the Mongolian People’s Republic in 1924, it received its current name, Ulaanbaatar, which means Red Hero. Under socialism, temples were destroyed while Soviet-style apartments, theatres and universities went up. In 1990 a peaceful democratic revolution began here, and since then the city has become a fast-growing modern capital that still keeps its Buddhist and nomadic roots."},
+ {id:"culture", em:"🐎", title:"Culture & customs", text:"A few customs will help you feel at home. When you visit a ger, step over the threshold rather than on it, and move around inside clockwise, following the sun. Offer and receive things, especially food and drink, with your right hand, or with both hands, as a sign of respect. If you’re offered milk tea or a snack, accept it and at least taste it. Avoid pointing your feet toward the stove or the family altar, and if you accidentally touch someone’s foot with yours, shake their hand straight away. Listen for khöömii, the famous throat singing that produces two notes at once, and the morin khuur, the horse-head fiddle, Mongolia’s national instrument. The biggest celebrations are Naadam in July, with wrestling, horse racing and archery, and Tsagaan Sar, the lunar new year in late winter."},
+ {id:"food", em:"🥟", title:"Food to try", text:"Mongolian food is hearty, made for long winters. Try buuz, steamed dumplings filled with mutton or beef, the star of every Tsagaan Sar table. Khuushuur are crispy fried meat pastries, a favourite at Naadam. Tsuivan is a filling dish of hand-cut noodles fried with meat and vegetables. To drink, there’s süütei tsai, salty milk tea, served almost everywhere. In summer, adventurous guests can try airag, fermented mare’s milk, lightly sour and slightly alcoholic. In the countryside, look for khorkhog, meat cooked with hot stones in a sealed pot. And if you’re vegetarian, Ulaanbaatar has a growing number of vegetarian restaurants, many inspired by Buddhist tradition."},
+ {id:"tips", em:"🧭", title:"Travel tips", text:"Here are a few practical tips. The currency is the tögrög. Cards are widely accepted in the city, but carry some cash for markets and small shops. Traffic in Ulaanbaatar can be heavy at rush hour, so allow plenty of extra time for your trip back to the airport. The weather changes quickly; even in summer, evenings can be cool, so keep a warm layer handy. In winter, dress for extreme cold. Drink bottled or boiled water rather than tap water. And a few words go a long way: sain baina uu means hello, and bayarlalaa means thank you."},
+ {id:"break", em:"☕", title:"Take a break", text:"If you’d like to stretch your legs, just let your driver know. Good places for a short break on this route include the area around Zaisan, with cafés, shops and the viewpoint above the city, and the centre around Sükhbaatar Square, with malls, restaurants and clean restrooms. The State Department Store on Peace Avenue is a classic stop for snacks, souvenirs and cashmere. Please stay seated while the vehicle is moving, and wait for your driver to find a safe place to stop."}
+];
+
+const LANGS = {
+ en:{name:"English", tts:"en-US", label:"English"},
+ mn:{name:"Mongolian (Cyrillic)", tts:"mn-MN", label:"Монгол"},
+ ja:{name:"Japanese", tts:"ja-JP", label:"日本語"},
+ ko:{name:"Korean", tts:"ko-KR", label:"한국어"},
+ zh:{name:"Simplified Chinese", tts:"zh-CN", label:"中文"},
+ ru:{name:"Russian", tts:"ru-RU", label:"Русский"},
+ de:{name:"German", tts:"de-DE", label:"Deutsch"},
+ fr:{name:"French", tts:"fr-FR", label:"Français"}
+};
+const CHIPS = ["Why is it called Ulaanbaatar?","Who was Chinggis Khaan?","What is a ger like inside?","Best place for a city view?"];
+
+const $ = id => document.getElementById(id);
+const S = { idx:0, view:"stop", topic:null, lang:"en", rate:0.95, auto:false,
+  speaking:false, sentences:[], pos:0, token:0, current:null, custom:null, cache:{}, timer:null, wake:null };
+let sample = null;
+const synth = window.speechSynthesis || null;
+
+/* ---------- Rendering ---------- */
+function buildUI(){
+  $("lang").innerHTML = Object.entries(LANGS).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join("");
+  $("route").innerHTML = STOPS.map((s,i)=>`<li data-i="${i}"><button aria-label="Stop ${i+1}: ${s.title}"><span class="dot">${i+1}</span><span class="lbl">${s.short}</span></button></li>`).join("");
+  $("route").querySelectorAll("li").forEach(li=>li.querySelector("button").onclick=()=>goStop(+li.dataset.i,true));
+  $("topics").innerHTML = TOPICS.map(t=>`<button class="topic" data-id="${t.id}"><span class="em" aria-hidden="true">${t.em}</span>${t.title}</button>`).join("");
+  $("topics").querySelectorAll(".topic").forEach(b=>b.onclick=()=>playTopic(b.dataset.id));
+  $("chips").innerHTML = CHIPS.map(c=>`<button class="chip">${c}</button>`).join("");
+  $("chips").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{$("q").value=b.textContent;ask();});
+}
+
+function currentItem(){
+  if (S.view==="custom") return S.custom;
+  if (S.view==="topic") return TOPICS.find(t=>t.id===S.topic);
+  return STOPS[S.idx];
+}
+
+function renderHeader(){
+  const it = currentItem();
+  if (S.view==="stop") $("where").textContent = `Stop ${S.idx+1} of ${STOPS.length}`;
+  else if (S.view==="topic") $("where").textContent = "Topic";
+  else $("where").textContent = it.where || "Your guide";
+  $("title").textContent = it.title;
+  $("route").querySelectorAll("li").forEach((li,i)=>{
+    li.classList.toggle("current", S.view==="stop" && i===S.idx);
+    li.classList.toggle("done", i<S.idx || (S.view!=="stop" && i===S.idx));
+  });
+  const cur = $("route").querySelector("li.current");
+  if (cur) cur.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth", inline:"center", block:"nearest"});
+  $("topics").querySelectorAll(".topic").forEach(b=>b.setAttribute("aria-current", S.view==="topic" && b.dataset.id===S.topic ? "true":"false"));
+  $("prev").disabled = S.view==="stop" && S.idx===0;
+  $("next").disabled = S.view==="stop" && S.idx===STOPS.length-1;
+}
+
+function splitSentences(text){
+  const parts = text.match(/[^.!?。！？]+[.!?。！？]+["”’»]?\s*|[^.!?。！？]+$/g) || [text];
+  return parts.map(p=>p.trim()).filter(Boolean);
+}
+
+function renderCaption(){
+  const c = $("caption");
+  c.innerHTML = "";
+  S.sentences.forEach((s,i)=>{
+    const sp = document.createElement("span");
+    sp.textContent = s + " ";
+    if (i<S.pos) sp.className="read";
+    if (i===S.pos && S.speaking) sp.className="now";
+    c.appendChild(sp);
+  });
+  c.classList.toggle("idle", !S.speaking && S.pos===0);
+  const now = c.querySelector(".now");
+  if (now) c.scrollTop = Math.max(0, now.offsetTop - c.offsetTop - 24);
+}
+
+function setPlayState(){
+  document.body.classList.toggle("speaking", S.speaking);
+  $("playIcon").innerHTML = S.speaking
+    ? '<rect x="6.5" y="5" width="4" height="14" rx="1.2"/><rect x="13.5" y="5" width="4" height="14" rx="1.2"/>'
+    : '<path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/>';
+  $("play").setAttribute("aria-label", S.speaking ? "Pause narration" : "Play narration");
+  $("playlabel").textContent = S.speaking ? "Speaking… press to pause"
+    : (S.pos>0 && S.pos<S.sentences.length ? "Paused — press to continue" : "Press play to hear this stop");
+}
+
+function note(msg){ $("note").textContent = msg || ""; }
+
+/* ---------- Language / AI ---------- */
+async function textFor(item){
+  if (item.custom) return item.text;
+  if (S.lang==="en") return item.text;
+  const key = S.lang+":"+item.id;
+  if (S.cache[key]) return S.cache[key];
+  if (!sample){ note(`Translation needs the AI guide, so this plays in English.`); return item.text; }
+  note(`Translating into ${LANGS[S.lang].label}…`);
+  try{
+    const r = await sample(`Translate this tour guide narration into ${LANGS[S.lang].name}. Keep it warm, natural and easy to listen to when read aloud. Keep place names recognisable. Return only the translation, with no notes or formatting.\n\n${item.text}`, {modelTier:"quick"});
+    const t = (r.text||"").trim();
+    if (!t) throw new Error("empty");
+    S.cache[key] = t; note(""); return t;
+  }catch(e){
+    note(e && e.code==="rate_limited" ? "The guide is busy. Playing in English for now." : "Translation failed. Playing in English.");
+    return item.text;
+  }
+}
+
+function pickVoice(){
+  if (!synth) return null;
+  const want = LANGS[S.lang].tts.toLowerCase(), base = want.split("-")[0];
+  const vs = synth.getVoices();
+  return vs.find(v=>v.lang.toLowerCase()===want && /natural|neural|google|premium|enhanced/i.test(v.name))
+      || vs.find(v=>v.lang.toLowerCase().replace("_","-")===want)
+      || vs.find(v=>v.lang.toLowerCase().startsWith(base)) || null;
+}
+
+/* ---------- Speech ---------- */
+function stopSpeech(keepPos){
+  S.token++;
+  if (synth) synth.cancel();
+  S.speaking = false;
+  if (!keepPos) S.pos = 0;
+  setPlayState(); renderCaption();
+}
+
+function speakFrom(i){
+  S.speaking = true; S.pos = i;
+  setPlayState(); renderCaption(); keepAwake();
+  if (!synth){ note("This device can’t speak aloud. Read the captions instead."); S.speaking=false; setPlayState(); return; }
+  const voice = pickVoice();
+  if (!voice && S.lang!=="en") note(`No ${LANGS[S.lang].label} voice on this device. Captions are shown; try another language for audio.`);
+  const tok = ++S.token;
+  const next = () => {
+    if (tok!==S.token) return;
+    if (S.pos >= S.sentences.length){ S.speaking=false; S.pos=S.sentences.length; setPlayState(); renderCaption(); finished(); return; }
+    const u = new SpeechSynthesisUtterance(S.sentences[S.pos]);
+    u.lang = LANGS[S.lang].tts; if (voice) u.voice = voice; u.rate = S.rate;
+    u.onend = () => { if (tok!==S.token) return; S.pos++; renderCaption(); next(); };
+    u.onerror = (e) => { if (tok!==S.token) return; if (e.error==="interrupted"||e.error==="canceled") return; S.pos++; next(); };
+    renderCaption();
+    synth.speak(u);
+  };
+  synth.cancel();
+  setTimeout(next, 60);
+}
+
+async function loadAndPlay(){
+  clearAuto();
+  stopSpeech();
+  const item = currentItem();
+  renderHeader();
+  S.sentences = splitSentences(item.text); renderCaption();
+  const txt = await textFor(item);
+  if (currentItem()!==item) return;
+  S.sentences = splitSentences(txt); S.pos = 0;
+  speakFrom(0);
+}
+
+async function prepare(){
+  stopSpeech();
+  const item = currentItem();
+  renderHeader();
+  const cached = S.lang==="en" || item.custom ? item.text : S.cache[S.lang+":"+item.id];
+  S.sentences = splitSentences(cached || item.text);
+  renderCaption(); setPlayState();
+}
+
+function finished(){
+  releaseWake();
+  if (S.auto && S.view==="stop" && S.idx < STOPS.length-1) startCountdown();
+  else if (S.auto && S.view==="stop") { $("playlabel").textContent = "That’s the whole route. Enjoy Ulaanbaatar!"; }
+}
+
+/* ---------- Navigation ---------- */
+function goStop(i, play){ S.view="stop"; S.idx=Math.max(0,Math.min(STOPS.length-1,i)); note(""); clearAuto(); play ? loadAndPlay() : prepare(); }
+function playTopic(id){ S.view="topic"; S.topic=id; note(""); loadAndPlay(); }
+
+$("play").onclick = () => {
+  if (S.speaking){ stopSpeech(true); releaseWake(); return; }
+  clearAuto();
+  if (S.pos>0 && S.pos<S.sentences.length) { speakFrom(S.pos); return; }
+  loadAndPlay();
+};
+$("next").onclick = () => { if (S.view!=="stop") goStop(S.idx,true); else goStop(S.idx+1,true); };
+$("prev").onclick = () => { if (S.view!=="stop") goStop(S.idx,true); else goStop(S.idx-1,true); };
+
+/* ---------- Auto tour ---------- */
+function startCountdown(){
+  let left = +$("gap").value;
+  const cd = $("countdown"); cd.hidden=false;
+  const tick = () => {
+    cd.textContent = `Next stop in ${left}s`;
+    $("playlabel").textContent = `Next: ${STOPS[S.idx+1].title}`;
+    if (left--<=0){ clearAuto(); goStop(S.idx+1,true); return; }
+    S.timer = setTimeout(tick, 1000);
+  };
+  tick();
+}
+function clearAuto(){ clearTimeout(S.timer); S.timer=null; $("countdown").hidden=true; }
+$("auto").onclick = () => {
+  S.auto = !S.auto; $("auto").setAttribute("aria-pressed", S.auto);
+  if (!S.auto) clearAuto();
+  else if (!S.speaking && S.view==="stop") loadAndPlay();
+};
+
+/* ---------- Ask the guide ---------- */
+function guidePrompt(task){
+  const here = S.view==="stop" ? STOPS[S.idx].title : "on the way from Chinggis Khaan International Airport into Ulaanbaatar";
+  return `You are a friendly, knowledgeable local tour guide speaking to passengers in a car driving from Chinggis Khaan International Airport into central Ulaanbaatar, Mongolia. The car is currently near: ${here}. Your words will be read aloud by text-to-speech, so write in plain spoken sentences: no lists, no headings, no markdown, no emoji. Answer in ${LANGS[S.lang].name}. Be accurate; if you are not sure of a fact, say so briefly rather than guessing. Never tell the driver to look at the screen.\n\n${task}`;
+}
+
+async function runAI(task, title, where){
+  if (!sample) return;
+  clearAuto(); stopSpeech();
+  $("askBtn").disabled = $("more").disabled = true;
+  S.view = "custom"; S.custom = {custom:true, id:"custom", title, where, text:"…"};
+  renderHeader(); S.sentences=["Thinking…"]; renderCaption(); note("");
+  try{
+    const r = await sample(guidePrompt(task), {modelTier:"default", cache:false,
+      onText: ({text}) => { if (S.custom && !S.speaking){ S.sentences = splitSentences(text||"Thinking…"); renderCaption(); } }});
+    S.custom.text = (r.text||"").trim() || "Sorry, I don’t have an answer for that one.";
+    S.sentences = splitSentences(S.custom.text); S.pos=0;
+    speakFrom(0);
+  }catch(e){
+    S.custom.text = e && e.code==="rate_limited" ? "The guide is busy right now. Try again in a minute." : (e && e.code==="not_granted" ? "The AI guide needs permission to answer questions." : "The guide couldn’t answer just now. Try asking again.");
+    S.sentences = splitSentences(S.custom.text); renderCaption();
+  }finally{
+    $("askBtn").disabled = $("more").disabled = false;
+  }
+}
+
+function ask(){
+  const q = $("q").value.trim();
+  if (!q){ $("q").focus(); return; }
+  $("q").value = "";
+  runAI(`A passenger asks: "${q}". Answer in 40 to 120 words.`, q, "Your question");
+}
+$("askBtn").onclick = ask;
+$("q").addEventListener("keydown", e=>{ if (e.key==="Enter") ask(); });
+$("more").onclick = () => {
+  const s = STOPS[S.idx];
+  runAI(`The passengers already heard this about ${s.title}: "${s.text}". Now tell them something new and interesting about ${s.title} and its surroundings that was not mentioned: a story, a legend, a surprising fact or a local tip. Speak for 120 to 170 words.`, `More about ${s.short}`, `Stop ${S.idx+1} of ${STOPS.length}`);
+};
+
+/* Voice question, where the browser supports it */
+const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (Rec){
+  $("mic").hidden = false;
+  let rec = null;
+  $("mic").onclick = () => {
+    if (rec){ rec.stop(); return; }
+    try{
+      rec = new Rec(); rec.lang = LANGS[S.lang].tts; rec.interimResults = true;
+      $("mic").classList.add("on"); stopSpeech(true);
+      rec.onresult = e => { $("q").value = Array.from(e.results).map(r=>r[0].transcript).join(""); if (e.results[e.results.length-1].isFinal) { rec.stop(); } };
+      rec.onend = () => { $("mic").classList.remove("on"); rec=null; if ($("q").value.trim()) ask(); };
+      rec.onerror = () => { $("mic").classList.remove("on"); rec=null; note("Voice input isn’t available here. Type your question instead."); };
+      rec.start();
+    }catch(e){ $("mic").classList.remove("on"); rec=null; note("Voice input isn’t available here. Type your question instead."); }
+  };
+}
+
+/* ---------- Settings ---------- */
+$("lang").onchange = e => {
+  S.lang = e.target.value;
+  try{ localStorage.setItem("ubg-lang", S.lang); }catch(_){}
+  if (S.view==="custom") goStop(S.idx,false); else prepare();
+  if (S.lang!=="en" && !sample) note("Other languages need the AI guide, which isn’t available here. Stories will play in English.");
+};
+$("rate").oninput = e => { S.rate = +e.target.value; $("rateVal").textContent = S.rate.toFixed(2)+"×"; try{ localStorage.setItem("ubg-rate", S.rate); }catch(_){} };
+
+async function keepAwake(){ try{ if ("wakeLock" in navigator && !S.wake) S.wake = await navigator.wakeLock.request("screen"); }catch(_){} }
+function releaseWake(){ try{ S.wake && S.wake.release(); }catch(_){} S.wake=null; }
+
+/* ---------- Start ---------- */
+buildUI();
+try{
+  const l = localStorage.getItem("ubg-lang"); if (l && LANGS[l]) { S.lang=l; }
+  const r = parseFloat(localStorage.getItem("ubg-rate")); if (r>=0.7 && r<=1.3) S.rate=r;
+}catch(_){}
+$("lang").value = S.lang; $("rate").value = S.rate; $("rateVal").textContent = S.rate.toFixed(2)+"×";
+prepare();
+if (synth && synth.onvoiceschanged!==undefined) synth.onvoiceschanged = () => {};
+
+(async () => {
+  try{ sample = window.claude && window.claude.use ? await window.claude.use("sample") : null; }catch(_){ sample=null; }
+  if (!sample){
+    $("askBtn").disabled = true; $("more").disabled = true; $("q").disabled = true; $("mic").hidden = true;
+    $("aiOff").hidden = false;
+  }
+})();
+</script>
+</body>
+</html>
